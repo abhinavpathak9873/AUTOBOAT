@@ -109,9 +109,9 @@ while running:
     #laser.draw_line(screen)
     #print(sensor_data)
     #if sensor_data != False:
-    #    for data in sensor_data:
-    #       #if int(round(data[1]))==0:
-    #        print(data[1])
+    for data in sensor_data:
+        #if int(round(data[1]))==0:
+        print(data[1]-180)
     #print(sensor_data)
     #laser.draw_line(screen)
 
