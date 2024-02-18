@@ -3,6 +3,17 @@ import pygame
 import sys
 import math
 import lidar_sim as lidar
+import camera_sim as camera
+
+# Create obstacle class
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height):
+        super().__init__()
+        self.image = pygame.Surface([width, height])
+        self.image.fill((0,0,0))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
 
 # Define constants
 # Constants in meters and meters per second
@@ -70,7 +81,7 @@ def draw_rotated_robot(x, y, angle):
 
 # Load robot imag
 robot_image = pygame.image.load('robot.png')
-
+base_image = pygame.image.load('base.jpg')
 # Font for displaying FPS
 font = pygame.font.Font(None, 36)
 
@@ -83,11 +94,17 @@ delta_time = 0
 kill = 0  # Initialize the kill variable
 
 laser=lidar.LaserSensor(1200, background, uncertentity=(0.5,0.01), screen=screen, robot_direction=robot_direction)
-
+cam = camera.CameraScan(80, background, uncertentity=(0.5,0.01), screen=screen, robot_direction=robot_direction, fov = 70)
 
 while running:
     screen.fill((0,0,0))
     screen.blit(background, (0,0))
+    #screen.blit(base_image,(width//2, height//2))
+    # Create sprite group for obstacles
+
+    # Create a Rect object for the rectangle    
+    # rectangle_rect = pygame.Rect(width//2, height//2, 160, 110)
+    #pygame.draw.rect(screen, (0,0,0), rectangle_rect)
     # Calculate delta time
     delta_time = clock.tick(120) / 1000.0  # Convert milliseconds to seconds
 
@@ -95,8 +112,10 @@ while running:
     player_position[0] = max(0, min(width - robot_size[0], player_position[0] + robot_velocity[0] * delta_time))
     player_position[1] = max(0, min(height - robot_size[1], player_position[1] + robot_velocity[1] * delta_time))
     laser.position = ( ((player_position[0] + robot_size[0] / 2) + 30 * math.cos(robot_direction)), ((player_position[1] + robot_size[1] / 2) + 30 * math.sin(robot_direction)))
+    cam.position = ( ((player_position[0] + robot_size[0] / 2) + 30 * math.cos(robot_direction)), ((player_position[1] + robot_size[1] / 2) + 30 * math.sin(robot_direction)))
     #laser.position = pygame.mouse.get_pos()
     sensor_data=laser.sense_obstacles()
+    cam_data = cam.sense_obstacles()
     #laser.robot_direction = robot_direction
     player_position2 = player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2
     end_point = (player_position2[0] + 150 * math.cos(robot_direction), player_position2[1] + 150 * math.sin(robot_direction))
@@ -104,18 +123,19 @@ while running:
 
     draw_rotated_robot(player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2, math.degrees(robot_direction))
     # Draw the red line
-    sensor_data = laser.sense_obstacles()
     laser.robot_direction = robot_direction
+    cam.robot_direction = robot_direction
+    
     #laser.draw_line(screen)
     #print(sensor_data)
     #if sensor_data != False:
-    #for data in sensor_data:
-        #if int(round(data[1]))==0:
-    #    print(round(data[1]-180))
+    for data in sensor_data:
+        if int(data[1])==0:
+            print(data[0]/100)
     #print(sensor_data)
     #laser.draw_line(screen)
 
-
+    
     
     
     # Print the speed and turn values

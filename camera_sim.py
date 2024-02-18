@@ -10,10 +10,9 @@ def uncertainty_add(distance, angle, sigma):
     angle=max(angle, 0)
     return [distance , angle]
 
-class LaserSensor:
-    def __init__(self, Range, map, uncertentity, screen, robot_direction):
+class CameraScan:
+    def __init__(self, Range, map, uncertentity, screen, robot_direction, fov):
         self.Range=Range
-        self.speed=4 # rounds per seconds
         self.sigma=np.array([uncertentity[0], uncertentity[1]])
         self.position=(0,0)
         self.map=map 
@@ -21,6 +20,7 @@ class LaserSensor:
         self.sensedObstacles=[]
         self.screen = screen
         self.robot_direction = robot_direction
+        self.fov = fov
     def distance(self, ObstaclePosition):
         px=(ObstaclePosition[0]-self.position[0])**2
         py=(ObstaclePosition[1]-self.position[1])**2
@@ -28,14 +28,10 @@ class LaserSensor:
     def sense_obstacles(self):
         data=[]
         x1,y1=self.position[0], self.position[1]
-        for angle in np.linspace(self.robot_direction, (self.robot_direction + 2*math.pi), 100, endpoint=False):
+        for angle in np.linspace(self.robot_direction -math.radians(self.fov//2), (self.robot_direction + math.radians(self.fov//2)), 100, endpoint=False):
             #print(angle)
             x2,y2=(x1 + self.Range * math.cos(angle), y1 + self.Range * math.sin(angle))
-            #if (math.degrees(angle-self.robot_direction)-180) in range(-40,40):
-             # Draw scan line
-            
-            #if angle == self.robot_direction: 
-            #   pygame.draw.line(self.screen, (0, 0, 255), self.position, (int(x2), int(y2)),2)  # Draw scan line
+            pygame.draw.line(self.screen, (0, 0, 255), self.position, (int(x2), int(y2)),2)  # Draw scan line
                 
             
 
