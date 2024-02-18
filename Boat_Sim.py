@@ -94,14 +94,15 @@ while running:
     # Draw the Robot
     player_position[0] = max(0, min(width - robot_size[0], player_position[0] + robot_velocity[0] * delta_time))
     player_position[1] = max(0, min(height - robot_size[1], player_position[1] + robot_velocity[1] * delta_time))
-    laser.position = (player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2)
+    laser.position = ( ((player_position[0] + robot_size[0] / 2) + 30 * math.cos(robot_direction)), ((player_position[1] + robot_size[1] / 2) + 30 * math.sin(robot_direction)))
     #laser.position = pygame.mouse.get_pos()
     sensor_data=laser.sense_obstacles()
     #laser.robot_direction = robot_direction
     player_position2 = player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2
     end_point = (player_position2[0] + 150 * math.cos(robot_direction), player_position2[1] + 150 * math.sin(robot_direction))
     #pygame.draw.line(screen, (255, 0, 0), (player_position2), end_point, 2)  
-    
+
+    draw_rotated_robot(player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2, math.degrees(robot_direction))
     # Draw the red line
     sensor_data = laser.sense_obstacles()
     laser.robot_direction = robot_direction
@@ -115,7 +116,7 @@ while running:
     #laser.draw_line(screen)
 
 
-    draw_rotated_robot(player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2, math.degrees(robot_direction))
+    
     
     # Print the speed and turn values
     linear_speed = math.sqrt(robot_velocity[0] ** 2 + robot_velocity[1] ** 2) / PIXELS_PER_METER

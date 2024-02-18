@@ -48,8 +48,8 @@ class LaserSensor:
                         output=uncertainty_add(distance, math.degrees(angle)-180, self.sigma)
                         output.append(self.position)
                         data.append(output)
-                        if angle==self.robot_direction:
-                            print(self.distance((x,y))/100)
+                        #if angle==self.robot_direction:
+                        #    print(self.distance((x,y))/100)
                         break
                 
         if len(data)>0:
