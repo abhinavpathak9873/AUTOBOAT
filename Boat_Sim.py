@@ -12,8 +12,9 @@ FORWARD_FRICTION = 0.15  # Coefficient of friction for forward movement
 TURN_FRICTION = 0.05 # Coefficient of friction for turning
 STEERING_SENSITIVITY = 0.002  # Sensitivity of steering
 ACCELERATION_TURN_MPS2 = 0.05  # Acceleration rate for turning in meters per second squared
-MAX_SPEED_MPS = 2.0  # Maximum speed limit for the robot in meters per second
-MAX_TURN_SPEED_RADPS = math.radians(180)  # Maximum turning speed in radians per second
+MAX_SPEED_MPS = 1.0  # Maximum speed limit for the robot in meters per second
+MAX_TURN_SPEED_RADPS = math.radians(180)  # Maximum turning speed in radians per second\
+MOTOR_SPEED = 70
 
 # Convert constants from meters per second to pixels per frame
 PIXELS_PER_METER = 100  # Assuming 1 pixel represents 1 cm
@@ -76,6 +77,8 @@ clock = pygame.time.Clock()
 # Track time elapsed since last frame
 delta_time = 0
 
+kill = 0  # Initialize the kill variable
+
 while running:
     screen.fill(background_color)
     
@@ -86,7 +89,14 @@ while running:
     player_position[0] = max(0, min(width - robot_size[0], player_position[0] + robot_velocity[0] * delta_time))
     player_position[1] = max(0, min(height - robot_size[1], player_position[1] + robot_velocity[1] * delta_time))
     draw_rotated_robot(player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2, math.degrees(robot_direction))
-
+    
+    # Print the speed and turn values
+    linear_speed = math.sqrt(robot_velocity[0] ** 2 + robot_velocity[1] ** 2) / PIXELS_PER_METER
+    turn_speed = math.degrees(turning_velocity)
+    SPEED_CONTROL = round(linear_speed/MAX_SPEED_MPS,3)*MOTOR_SPEED
+    TURN_CONTROL = round(turn_speed/math.degrees(MAX_TURN_SPEED_RADPS),3)*MOTOR_SPEED
+    print(SPEED_CONTROL, TURN_CONTROL, kill)
+    
     # Draw the balls within the field of view
     for ball in balls:
         ball_position = ball[1]
@@ -101,7 +111,7 @@ while running:
     keys = pygame.key.get_pressed()
 
     # Continuous movement when keys are held down
-    if keys[pygame.K_w]:
+    if keys[pygame.K_w] and kill==0:
         # Accelerate the robot forwards
         robot_velocity[0] += math.cos(robot_direction) * ACCELERATION * delta_time
         robot_velocity[1] += math.sin(robot_direction) * ACCELERATION * delta_time
@@ -110,26 +120,31 @@ while running:
     robot_velocity[0] *= FORWARD_FRICTION ** delta_time
     robot_velocity[1] *= FORWARD_FRICTION ** delta_time
 
-    if keys[pygame.K_d]:
+    if keys[pygame.K_d] and kill==0:
         # Accelerate the turning of the robot clockwise
         turning_velocity += ACCELERATION_TURN * delta_time
-    elif turning_velocity > 0:
+    elif turning_velocity > 0 and kill ==0:
         # Apply friction to slow down turning
         turning_velocity *= TURN_FRICTION ** delta_time
-    if keys[pygame.K_a]:
+    if keys[pygame.K_a] and kill==0:
         # Accelerate the turning of the robot counterclockwise
         turning_velocity -= ACCELERATION_TURN * delta_time
-    elif turning_velocity < 0:
+    elif turning_velocity < 0 and kill==0:
         # Apply friction to slow down turning
         turning_velocity *= TURN_FRICTION ** delta_time
 
+    if kill==1:
+        robot_velocity[0] = 0
+        robot_velocity[1] = 0
+        turning_velocity =0
+
     # Limit the maximum turning speed of the robot
-    if abs(turning_velocity) > MAX_TURN_SPEED_RADPS:
+    if abs(turning_velocity) > MAX_TURN_SPEED_RADPS and kill==0:
         turning_velocity = math.copysign(MAX_TURN_SPEED_RADPS, turning_velocity)
 
     # Limit the maximum speed of the robot
     speed = math.sqrt(robot_velocity[0] ** 2 + robot_velocity[1] ** 2)
-    if speed > MAX_SPEED_MPS * PIXELS_PER_METER:
+    if speed > MAX_SPEED_MPS * PIXELS_PER_METER and kill == 0:
         scale_factor = MAX_SPEED_MPS * PIXELS_PER_METER / speed
         robot_velocity[0] *= scale_factor
         robot_velocity[1] *= scale_factor
@@ -141,6 +156,10 @@ while running:
     player_position[0] += robot_velocity[0] * delta_time
     player_position[1] += robot_velocity[1] * delta_time
 
+    # Check if the 'K' key is pressed
+    if keys[pygame.K_k]:
+        kill = 1
+    
     # Draw FPS
     fps_text = font.render(f"FPS: {int(clock.get_fps())}", True, pygame.Color('white'))
     screen.blit(fps_text, (width - 150, height - 50))
