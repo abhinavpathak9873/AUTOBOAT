@@ -23,7 +23,7 @@ ACCELERATION = ACCELERATION_MPS2 * PIXELS_PER_METER
 ACCELERATION_TURN = ACCELERATION_TURN_MPS2 * PIXELS_PER_METER
 
 # Initialize robot direction (angle in radians)
-robot_direction = 0  # Initially facing right
+robot_direction = random.randint(0,360)  # Initially facing right
 # Initialize robot velocity
 robot_velocity = [0, 0]  # [x_velocity, y_velocity]
 # Initialize turning angle velocity
@@ -45,7 +45,9 @@ weights = {"red": -1, "blue": 1, "green": 3, "yellow": 2}
 collection_points = [((width-30.5, 30.5), (0, 150, 45),(128, 0, 128)), ((width-30.5,769.5), (0, 150, 45),(128, 0, 128))]
 
 # Player position and field of view angle
-player_position = [0, 400]
+random_variance_x= random.randint(0,200) - 100
+random_variance_y= random.randint(0,200)
+player_position = [width/2 + random_variance_x, height - random_variance_y]
 robot_size = (80, 60)  # Adjusted to match the size of the robot image
 fov_angle = 70  # in degrees
 
@@ -93,8 +95,12 @@ while running:
     # Print the speed and turn values
     linear_speed = math.sqrt(robot_velocity[0] ** 2 + robot_velocity[1] ** 2) / PIXELS_PER_METER
     turn_speed = math.degrees(turning_velocity)
-    SPEED_CONTROL = round(linear_speed/MAX_SPEED_MPS,3)*MOTOR_SPEED
-    TURN_CONTROL = round(turn_speed/math.degrees(MAX_TURN_SPEED_RADPS),3)*MOTOR_SPEED
+    SPEED_CONTROL = round((linear_speed/MAX_SPEED_MPS)*MOTOR_SPEED,1)
+    TURN_CONTROL = round((turn_speed/math.degrees(MAX_TURN_SPEED_RADPS))*MOTOR_SPEED,1)
+    if SPEED_CONTROL <=5:
+        SPEED_CONTROL =5
+    if abs(TURN_CONTROL) <=5:
+        TURN_CONTROL =5
     print(SPEED_CONTROL, TURN_CONTROL, kill)
     
     # Draw the balls within the field of view
