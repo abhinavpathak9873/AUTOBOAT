@@ -28,13 +28,15 @@ class LaserSensor:
     def sense_obstacles(self):
         data=[]
         x1,y1=self.position[0], self.position[1]
-        for angle in np.linspace(self.robot_direction,2*math.pi, 360, False):
+        for angle in np.linspace(self.robot_direction, self.robot_direction + 2*math.pi, 60, endpoint=False):
             x2,y2=(x1 + self.Range * math.cos(angle), y1 + self.Range * math.sin(angle))
-            if angle == self.robot_direction: 
-                pygame.draw.line(self.screen, (0, 255, 0), self.position, (int(x2), int(y2)))  # Draw scan line
+            pygame.draw.line(self.screen, (255, 0, 0), self.position, (int(x2), int(y2)))  # Draw scan line
+            
+            #if angle == self.robot_direction: 
+            #   pygame.draw.line(self.screen, (0, 0, 255), self.position, (int(x2), int(y2)),2)  # Draw scan line
                 
             
-            #pygame.draw.line(self.screen, (255, 0, 0), self.position, (int(x2), int(y2)))  # Draw scan line
+            
             for i in range(0,200):
                 u=i/100
                 x=int(x2 * u + x1 * (1-u) )
@@ -43,7 +45,7 @@ class LaserSensor:
                     color=self.map.get_at((x,y))
                     if (color[0], color[1], color[2])==(0,0,0):
                         distance=self.distance((x,y))
-                        output=uncertainty_add(distance, angle, self.sigma)
+                        output=uncertainty_add(distance, math.degrees(angle)-180, self.sigma)
                         output.append(self.position)
                         data.append(output)
                         if angle==self.robot_direction:
