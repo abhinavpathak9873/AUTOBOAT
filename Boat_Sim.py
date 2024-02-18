@@ -89,7 +89,7 @@ while running:
     screen.fill((0,0,0))
     screen.blit(background, (0,0))
     # Calculate delta time
-    delta_time = clock.tick(60) / 1000.0  # Convert milliseconds to seconds
+    delta_time = clock.tick(120) / 1000.0  # Convert milliseconds to seconds
 
     # Draw the Robot
     player_position[0] = max(0, min(width - robot_size[0], player_position[0] + robot_velocity[0] * delta_time))
@@ -109,9 +109,9 @@ while running:
     #laser.draw_line(screen)
     #print(sensor_data)
     #if sensor_data != False:
-    for data in sensor_data:
+    #for data in sensor_data:
         #if int(round(data[1]))==0:
-        print(data[1]-180)
+    #    print(round(data[1]-180))
     #print(sensor_data)
     #laser.draw_line(screen)
 

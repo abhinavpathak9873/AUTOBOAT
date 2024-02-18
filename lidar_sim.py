@@ -28,7 +28,7 @@ class LaserSensor:
     def sense_obstacles(self):
         data=[]
         x1,y1=self.position[0], self.position[1]
-        for angle in np.linspace(self.robot_direction, self.robot_direction + 2*math.pi, 60, endpoint=False):
+        for angle in np.linspace(self.robot_direction, self.robot_direction + 2*math.pi, 100, endpoint=False):
             #print(angle)
             x2,y2=(x1 + self.Range * math.cos(angle), y1 + self.Range * math.sin(angle))
             pygame.draw.line(self.screen, (255, 0, 0), self.position, (int(x2), int(y2)))  # Draw scan line
