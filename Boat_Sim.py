@@ -68,7 +68,7 @@ def draw_rotated_robot(x, y, angle):
     # Draw the rotated robot onto the screen
     screen.blit(rotated_robot, robot_rect)
 
-# Load robot image
+# Load robot imag
 robot_image = pygame.image.load('robot.png')
 
 # Font for displaying FPS
