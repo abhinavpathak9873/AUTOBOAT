@@ -2,6 +2,7 @@ import random
 import pygame
 import sys
 import math
+import lidar_sim as lidar
 
 # Define constants
 # Constants in meters and meters per second
@@ -31,10 +32,10 @@ turning_velocity = 0
 
 # Set up display
 pygame.init()
-width, height = 1200, 800
+width, height = 1216, 816
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("IFOR CB 23 Simulator")
-background_color = (69, 212, 255)
+background = pygame.image.load("map.jpg")
 
 running = True
 
@@ -81,15 +82,39 @@ delta_time = 0
 
 kill = 0  # Initialize the kill variable
 
+laser=lidar.LaserSensor(1200, background, uncertentity=(0.5,0.01), screen=screen, robot_direction=robot_direction)
+
+
 while running:
-    screen.fill(background_color)
-    
+    screen.fill((0,0,0))
+    screen.blit(background, (0,0))
     # Calculate delta time
     delta_time = clock.tick(60) / 1000.0  # Convert milliseconds to seconds
 
     # Draw the Robot
     player_position[0] = max(0, min(width - robot_size[0], player_position[0] + robot_velocity[0] * delta_time))
     player_position[1] = max(0, min(height - robot_size[1], player_position[1] + robot_velocity[1] * delta_time))
+    laser.position = (player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2)
+    #laser.position = pygame.mouse.get_pos()
+    sensor_data=laser.sense_obstacles()
+    #laser.robot_direction = robot_direction
+    player_position2 = player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2
+    end_point = (player_position2[0] + 150 * math.cos(robot_direction), player_position2[1] + 150 * math.sin(robot_direction))
+    #pygame.draw.line(screen, (255, 0, 0), (player_position2), end_point, 2)  
+    
+    # Draw the red line
+    sensor_data = laser.sense_obstacles()
+    laser.robot_direction = robot_direction
+    #laser.draw_line(screen)
+    #print(sensor_data)
+    #if sensor_data != False:
+    #    for data in sensor_data:
+    #       #if int(round(data[1]))==0:
+    #        print(data[1])
+    #print(sensor_data)
+    #laser.draw_line(screen)
+
+
     draw_rotated_robot(player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2, math.degrees(robot_direction))
     
     # Print the speed and turn values
@@ -101,7 +126,7 @@ while running:
         SPEED_CONTROL =5
     if abs(TURN_CONTROL) <=5:
         TURN_CONTROL =5
-    print(SPEED_CONTROL, TURN_CONTROL, kill)
+    #print(SPEED_CONTROL, TURN_CONTROL, kill)
     
     # Draw the balls within the field of view
     for ball in balls:
@@ -141,8 +166,8 @@ while running:
 
     if kill==1:
         robot_velocity[0] = 0
-        robot_velocity[1] = 0
-        turning_velocity =0
+        robot_velocity[1] = 0 
+        turning_velocity =  0
 
     # Limit the maximum turning speed of the robot
     if abs(turning_velocity) > MAX_TURN_SPEED_RADPS and kill==0:
