@@ -28,7 +28,7 @@ extra_circles = [((30.5, 30.5), (0, 150, 45),(128, 0, 128)), ((30.5,769.5), (0, 
 
 # Player position and field of view angle
 player_position = (0, 400)
-robot_size = (60,30)
+robot_size = (80,40)
 fov_angle = 70  # in degrees
 
 # Function to check if a ball is within the field of view
