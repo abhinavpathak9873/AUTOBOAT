@@ -10,6 +10,20 @@ from datetime import datetime
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 import joblib
+import serial
+import time
+
+ser = serial.Serial('/dev/cu.usbmodem11101', 9600)  # Replace 'COMX' with your Arduino's serial port
+time.sleep(1)
+# Function to send values to Arduino
+def send_values_to_arduino(val1, val2, val3, val4, val5):
+    # Format the values as a single string separated by commas
+    data = f"{val1},{val2},{val3},{val4},{val5}\r"
+    # Send the data to Arduino
+    ser.write(data.encode())
+    # Add a small delay to allow Arduino to process the data
+    #time.sleep(0.1)
+
 
 
 pos_model = joblib.load('pos_estimation.pkl')
@@ -190,7 +204,10 @@ with open(file_path, 'w', newline='') as csvfile:
             SPEED_CONTROL =5
         if abs(TURN_CONTROL) <=5:
             TURN_CONTROL =5
-        #print(SPEED_CONTROL, TURN_CONTROL, kill)
+        garbage = 10
+        throw = -1
+        send_values_to_arduino(SPEED_CONTROL, TURN_CONTROL, kill, throw, garbage)
+        
         
         r=[]
         #r.append(SPEED_CONTROL)
@@ -209,10 +226,10 @@ with open(file_path, 'w', newline='') as csvfile:
                     pass
                 
         #print(r)
-        new_data = pd.DataFrame([r], columns=ang[:-3])
-        prediction = pos_model.predict(new_data)
-        print(prediction)
-        draw_rotated_robot((prediction[0][0]*100),prediction[0][1]*100,math.degrees(prediction[0][2]))
+        #new_data = pd.DataFrame([r], columns=ang[:-3])
+        #prediction = pos_model.predict(new_data)
+        # print(prediction)
+        #draw_rotated_robot((prediction[0][0]*100),prediction[0][1]*100,math.degrees(prediction[0][2]))
         r.append(player_position_x/100)
         r.append(player_position_y/100)
         r.append(robot_direction)
