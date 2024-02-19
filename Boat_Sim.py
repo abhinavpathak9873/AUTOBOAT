@@ -115,7 +115,7 @@ while running:
     cam.position = ( ((player_position[0] + robot_size[0] / 2) + 30 * math.cos(robot_direction)), ((player_position[1] + robot_size[1] / 2) + 30 * math.sin(robot_direction)))
     #laser.position = pygame.mouse.get_pos()
     sensor_data=laser.sense_obstacles()
-    cam_data = cam.sense_obstacles()
+    cam_data = cam.sense_obstacles(balls)
     #laser.robot_direction = robot_direction
     player_position2 = player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2
     end_point = (player_position2[0] + 150 * math.cos(robot_direction), player_position2[1] + 150 * math.sin(robot_direction))
@@ -129,14 +129,12 @@ while running:
     #laser.draw_line(screen)
     #print(sensor_data)
     #if sensor_data != False:
-    for data in sensor_data:
-        if int(data[1])==0:
-            print(data[0]/100)
+    #for data in sensor_data:
+    #    if int(data[1])==0:
+    #        print(data[0]/100)
     #print(sensor_data)
     #laser.draw_line(screen)
 
-    
-    
     
     # Print the speed and turn values
     linear_speed = math.sqrt(robot_velocity[0] ** 2 + robot_velocity[1] ** 2) / PIXELS_PER_METER

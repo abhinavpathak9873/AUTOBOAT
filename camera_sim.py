@@ -25,36 +25,60 @@ class CameraScan:
         px=(ObstaclePosition[0]-self.position[0])**2
         py=(ObstaclePosition[1]-self.position[1])**2
         return math.sqrt(px+py)
-    def sense_obstacles(self):
-        data=[]
-        x1,y1=self.position[0], self.position[1]
-        for angle in np.linspace(self.robot_direction -math.radians(self.fov//2), (self.robot_direction + math.radians(self.fov//2)), 100, endpoint=False):
-            #print(angle)
-            x2,y2=(x1 + self.Range * math.cos(angle), y1 + self.Range * math.sin(angle))
-            pygame.draw.line(self.screen, (0, 0, 255), self.position, (int(x2), int(y2)),2)  # Draw scan line
-                
-            
+    def sense_obstacles(self, balls):
+        data = []
+        x1, y1 = self.position[0], self.position[1]
+        for angle in np.linspace(self.robot_direction, (self.robot_direction + 2*math.pi), 100, endpoint=False):
+            # Adjust negative angles to fall within [0, 2π)
+            if angle < 0:
+                angle += 2 * math.pi
 
+            x2, y2 = (x1 + self.Range * math.cos(angle), y1 + self.Range * math.sin(angle))
+              # Draw scan line
             
-            for i in range(0,500):
-                u=i/100
-                x=int(x2 * u + x1 * (1-u) )
-                y=int(y2 * u +y1 * (1-u))
-                collision = False
-                if 0 < x< self.w and 0<y<self.h:
-                    color=self.map.get_at((x,y))
-
-                    if (color[0], color[1], color[2])==(0,0,0) and not (math.degrees(angle-self.robot_direction)>=140 and math.degrees(angle-self.robot_direction)<=220):
-                        distance=self.distance((x,y))
-                        output=uncertainty_add(distance, math.degrees(angle-self.robot_direction), self.sigma)
-                        output.append(self.position)
-                        data.append(output)
-                        #pygame.draw.line(self.screen, (255, 0, 0), self.position, (x, y))
-                        #if angle==self.robot_direction:
-                        #    print(self.distance((x,y))/100)
-                        break
+            start_angle = 95
+            end_angle =  225
+            for ball in balls:
+                ball_position = ball[1]
+                ball_color = ball[0]
+                ball_radius = 6.5  # Adjust according to your ball size
+                if not (math.degrees(angle-self.robot_direction)>=start_angle and math.degrees(angle-self.robot_direction)<=end_angle):
+                     pygame.draw.line(self.screen, (0, 0, 255), self.position, (int(x2), int(y2)), 2)
                 
-        if len(data)>0:
+                if self.circle_line_collision(x1, y1, x2, y2, ball_position[0], ball_position[1], ball_radius) and not (math.degrees(angle-self.robot_direction)>=start_angle and math.degrees(angle-self.robot_direction)<=end_angle):
+                    # Collision detected between the ray and the ball
+                   
+                    distance = self.distance(ball_position)
+                    output = uncertainty_add(distance, math.degrees(angle - self.robot_direction), self.sigma)
+                    output.append(self.position)
+                    output.append(ball_color)  # Add ball color to the output
+                    data.append(output)
+                    for d in data:
+                        print(d[1])
+                    break  # Break out of the loop to ensure each ray detects only one ball
+
+        if len(data) > 0:
             return data
         else:
             return False
+
+    def circle_line_collision(self, x1, y1, x2, y2, cx, cy, cr):
+        dx = x2 - x1
+        dy = y2 - y1
+        fx = x1 - cx
+        fy = y1 - cy
+        a = dx * dx + dy * dy
+        b = 2 * (fx * dx + fy * dy)
+        c = fx * fx + fy * fy - cr * cr
+        discriminant = b * b - 4 * a * c
+        if discriminant < 0:
+            return False
+        else:
+            discriminant = math.sqrt(discriminant)
+            t1 = (-b + discriminant) / (2 * a)
+            t2 = (-b - discriminant) / (2 * a)
+            if 0 <= t1 <= 1 or 0 <= t2 <= 1:
+                return True
+            else:
+                return False
+        
