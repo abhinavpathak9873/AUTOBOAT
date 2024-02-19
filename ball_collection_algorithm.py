@@ -3,7 +3,7 @@ import numpy as np
 import math
 import pygame
 import sys
-
+import csv
 #balls = [("red", (1, 1), 0), ("red", (7, 7), 1), ("red", (-4, 4), 2), ("red", (-6, 3), 3),
 #         ("blue", (3, 2), 4), ("blue", (1, 6), 5), ("blue", (-2, 2), 6), ("green", (6, 1), 7),
 #         ("green", (4, 5), 8), ("green", (-4, 6), 9), ("green", (-6, 7), 10), ("yellow", (5, 3), 11),

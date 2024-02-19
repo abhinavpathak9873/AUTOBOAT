@@ -4,6 +4,39 @@ import sys
 import math
 import lidar_sim as lidar
 import camera_sim as camera
+import csv
+import os
+from datetime import datetime
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+import joblib
+
+
+pos_model = joblib.load('pos_estimation.pkl')
+ang = []
+#ang.append("control")
+#ng.append("turn")
+for i in range(-180,181):
+    ang.append(str(i))
+
+
+# Create subfolder if it doesn't exist
+folder_name = "SLAM_training_data"
+if not os.path.exists(folder_name):
+    os.makedirs(folder_name)
+
+# Create and open CSV file
+current_datetime = datetime.now()
+file_name = current_datetime.strftime("%d-%m-%Y_%H-%M-%S") + ".csv"
+file_path = os.path.join(folder_name, file_name)
+
+with open(file_path, 'w', newline='') as csvfile:
+    # Define CSV writer
+    csv_writer = csv.writer(csvfile)
+        
+    # Write header row
+    csv_writer.writerow(ang)
+
 
 # Create obstacle class
 class Obstacle(pygame.sprite.Sprite):
@@ -78,6 +111,12 @@ def draw_rotated_robot(x, y, angle):
     robot_rect = rotated_robot.get_rect(center=(x, y))
     # Draw the rotated robot onto the screen
     screen.blit(rotated_robot, robot_rect)
+def draw_pos_estimation(x,y,angle):
+    rotated_robot = pygame.transform.rotate(base_image, -angle)  # Adjust rotation angle
+    # Get the rect of the rotated image for positioning
+    robot_rect = rotated_robot.get_rect(center=(x, y))
+    # Draw the rotated robot onto the screen
+    screen.blit(rotated_robot, robot_rect)
 
 # Load robot imag
 robot_image = pygame.image.load('robot.png')
@@ -95,130 +134,162 @@ kill = 0  # Initialize the kill variable
 
 laser=lidar.LaserSensor(1200, background, uncertentity=(0.5,0.01), screen=screen, robot_direction=robot_direction)
 cam = camera.CameraScan(80, background, uncertentity=(0.5,0.01), screen=screen, robot_direction=robot_direction, fov = 70)
+with open(file_path, 'w', newline='') as csvfile:
+    # Define CSV writer
+    csv_writer = csv.writer(csvfile)
+        
+    # Write header row
+    ang.append("x")
+    ang.append("y")
+    ang.append("direction")
+    csv_writer.writerow(ang)
+    while running:
+        screen.fill((0,0,0))
+        screen.blit(background, (0,0))
+        #screen.blit(base_image,(width//2, height//2))
+        # Create sprite group for obstacles
 
-while running:
-    screen.fill((0,0,0))
-    screen.blit(background, (0,0))
-    #screen.blit(base_image,(width//2, height//2))
-    # Create sprite group for obstacles
+        # Create a Rect object for the rectangle    
+        # rectangle_rect = pygame.Rect(width//2, height//2, 160, 110)
+        #pygame.draw.rect(screen, (0,0,0), rectangle_rect)
+        # Calculate delta time
+        delta_time = clock.tick(120) / 1000.0  # Convert milliseconds to seconds
 
-    # Create a Rect object for the rectangle    
-    # rectangle_rect = pygame.Rect(width//2, height//2, 160, 110)
-    #pygame.draw.rect(screen, (0,0,0), rectangle_rect)
-    # Calculate delta time
-    delta_time = clock.tick(120) / 1000.0  # Convert milliseconds to seconds
+        # Draw the Robot
+        player_position[0] = max(0, min(width - robot_size[0], player_position[0] + robot_velocity[0] * delta_time))
+        player_position[1] = max(0, min(height - robot_size[1], player_position[1] + robot_velocity[1] * delta_time))
+        laser.position = ( ((player_position[0] + robot_size[0] / 2) + 30 * math.cos(robot_direction)), ((player_position[1] + robot_size[1] / 2) + 30 * math.sin(robot_direction)))
+        cam.position = ( ((player_position[0] + robot_size[0] / 2) + 30 * math.cos(robot_direction)), ((player_position[1] + robot_size[1] / 2) + 30 * math.sin(robot_direction)))
+        #laser.position = pygame.mouse.get_pos()
+        cam_data = cam.sense_obstacles(balls)
+        #laser.robot_direction = robot_direction
+        player_position2 = player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2
+        end_point = (player_position2[0] + 150 * math.cos(robot_direction), player_position2[1] + 150 * math.sin(robot_direction))
+        #pygame.draw.line(screen, (255, 0, 0), (player_position2), end_point, 2)  
 
-    # Draw the Robot
-    player_position[0] = max(0, min(width - robot_size[0], player_position[0] + robot_velocity[0] * delta_time))
-    player_position[1] = max(0, min(height - robot_size[1], player_position[1] + robot_velocity[1] * delta_time))
-    laser.position = ( ((player_position[0] + robot_size[0] / 2) + 30 * math.cos(robot_direction)), ((player_position[1] + robot_size[1] / 2) + 30 * math.sin(robot_direction)))
-    cam.position = ( ((player_position[0] + robot_size[0] / 2) + 30 * math.cos(robot_direction)), ((player_position[1] + robot_size[1] / 2) + 30 * math.sin(robot_direction)))
-    #laser.position = pygame.mouse.get_pos()
-    sensor_data=laser.sense_obstacles()
-    cam_data = cam.sense_obstacles(balls)
-    #laser.robot_direction = robot_direction
-    player_position2 = player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2
-    end_point = (player_position2[0] + 150 * math.cos(robot_direction), player_position2[1] + 150 * math.sin(robot_direction))
-    #pygame.draw.line(screen, (255, 0, 0), (player_position2), end_point, 2)  
+        draw_rotated_robot(player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2, math.degrees(robot_direction))
+        # Draw the red line
+        laser.robot_direction = robot_direction
+        cam.robot_direction = robot_direction
+        sensor_data=laser.sense_obstacles()
+        
+        #laser.draw_line(screen)
+        #print(sensor_data)
+        #if sensor_data != False:
+       
+        #print(sensor_data)
+        #laser.draw_line(screen)
 
-    draw_rotated_robot(player_position[0] + robot_size[0] / 2, player_position[1] + robot_size[1] / 2, math.degrees(robot_direction))
-    # Draw the red line
-    laser.robot_direction = robot_direction
-    cam.robot_direction = robot_direction
-    
-    #laser.draw_line(screen)
-    #print(sensor_data)
-    #if sensor_data != False:
-    #for data in sensor_data:
-    #    if int(data[1])==0:
-    #        print(data[0]/100)
-    #print(sensor_data)
-    #laser.draw_line(screen)
+        
+        # Print the speed and turn values
+        linear_speed = math.sqrt(robot_velocity[0] ** 2 + robot_velocity[1] ** 2) / PIXELS_PER_METER
+        turn_speed = math.degrees(turning_velocity)
+        SPEED_CONTROL = round((linear_speed/MAX_SPEED_MPS)*MOTOR_SPEED,1)
+        TURN_CONTROL = round((turn_speed/math.degrees(MAX_TURN_SPEED_RADPS))*MOTOR_SPEED,1)
+        if SPEED_CONTROL <=5:
+            SPEED_CONTROL =5
+        if abs(TURN_CONTROL) <=5:
+            TURN_CONTROL =5
+        #print(SPEED_CONTROL, TURN_CONTROL, kill)
+        
+        r=[]
+        #r.append(SPEED_CONTROL)
+        #r.append(TURN_CONTROL)
+        for i in range(-180,181):
+            r.append(-1)
+        player_position_x = player_position[0] + robot_size[0] / 2
+        player_position_y = player_position[1] + robot_size[1] / 2
+        for data in sensor_data:
+                #print(round(data[1]-180))
+                try:
+                    #print(ang.index(round(data[1]-180)))
+                    r[ang.index(str(round(data[1]-180)))] = data[0]/100
+                except ValueError:
+                    print("bruh")
+                    pass
+                
+        #print(r)
+        new_data = pd.DataFrame([r], columns=ang[:-3])
+        prediction = pos_model.predict(new_data)
+        print(prediction)
+        draw_rotated_robot((prediction[0][0]*100),prediction[0][1]*100,math.degrees(prediction[0][2]))
+        r.append(player_position_x/100)
+        r.append(player_position_y/100)
+        r.append(robot_direction)
+        #print(len(r))
+        csv_writer.writerow(r)
+        # Draw the balls within the field of view
+        for ball in balls:
+            ball_position = ball[1]
+            pygame.draw.circle(screen, ball[0], (int(ball_position[0]), int(ball_position[1])), 6.5)
 
-    
-    # Print the speed and turn values
-    linear_speed = math.sqrt(robot_velocity[0] ** 2 + robot_velocity[1] ** 2) / PIXELS_PER_METER
-    turn_speed = math.degrees(turning_velocity)
-    SPEED_CONTROL = round((linear_speed/MAX_SPEED_MPS)*MOTOR_SPEED,1)
-    TURN_CONTROL = round((turn_speed/math.degrees(MAX_TURN_SPEED_RADPS))*MOTOR_SPEED,1)
-    if SPEED_CONTROL <=5:
-        SPEED_CONTROL =5
-    if abs(TURN_CONTROL) <=5:
-        TURN_CONTROL =5
-    #print(SPEED_CONTROL, TURN_CONTROL, kill)
-    
-    # Draw the balls within the field of view
-    for ball in balls:
-        ball_position = ball[1]
-        pygame.draw.circle(screen, ball[0], (int(ball_position[0]), int(ball_position[1])), 6.5)
+        # Draw the Collection Bins
+        for circle in collection_points:
+            pygame.draw.circle(screen, circle[1], (int(circle[0][0]), int(circle[0][1])), 30.5)
+            pygame.draw.circle(screen, circle[2], (int(circle[0][0]), int(circle[0][1])), 30.5, 5)
 
-    # Draw the Collection Bins
-    for circle in collection_points:
-        pygame.draw.circle(screen, circle[1], (int(circle[0][0]), int(circle[0][1])), 30.5)
-        pygame.draw.circle(screen, circle[2], (int(circle[0][0]), int(circle[0][1])), 30.5, 5)
+        # Get the state of all keys
+        keys = pygame.key.get_pressed()
 
-    # Get the state of all keys
-    keys = pygame.key.get_pressed()
+        # Continuous movement when keys are held down
+        if keys[pygame.K_w] and kill==0:
+            # Accelerate the robot forwards
+            robot_velocity[0] += math.cos(robot_direction) * ACCELERATION * delta_time
+            robot_velocity[1] += math.sin(robot_direction) * ACCELERATION * delta_time
 
-    # Continuous movement when keys are held down
-    if keys[pygame.K_w] and kill==0:
-        # Accelerate the robot forwards
-        robot_velocity[0] += math.cos(robot_direction) * ACCELERATION * delta_time
-        robot_velocity[1] += math.sin(robot_direction) * ACCELERATION * delta_time
+        # Apply friction to slow down forward movement
+        robot_velocity[0] *= FORWARD_FRICTION ** delta_time
+        robot_velocity[1] *= FORWARD_FRICTION ** delta_time
 
-    # Apply friction to slow down forward movement
-    robot_velocity[0] *= FORWARD_FRICTION ** delta_time
-    robot_velocity[1] *= FORWARD_FRICTION ** delta_time
+        if keys[pygame.K_d] and kill==0:
+            # Accelerate the turning of the robot clockwise
+            turning_velocity += ACCELERATION_TURN * delta_time
+        elif turning_velocity > 0 and kill ==0:
+            # Apply friction to slow down turning
+            turning_velocity *= TURN_FRICTION ** delta_time
+        if keys[pygame.K_a] and kill==0:
+            # Accelerate the turning of the robot counterclockwise
+            turning_velocity -= ACCELERATION_TURN * delta_time
+        elif turning_velocity < 0 and kill==0:
+            # Apply friction to slow down turning
+            turning_velocity *= TURN_FRICTION ** delta_time
 
-    if keys[pygame.K_d] and kill==0:
-        # Accelerate the turning of the robot clockwise
-        turning_velocity += ACCELERATION_TURN * delta_time
-    elif turning_velocity > 0 and kill ==0:
-        # Apply friction to slow down turning
-        turning_velocity *= TURN_FRICTION ** delta_time
-    if keys[pygame.K_a] and kill==0:
-        # Accelerate the turning of the robot counterclockwise
-        turning_velocity -= ACCELERATION_TURN * delta_time
-    elif turning_velocity < 0 and kill==0:
-        # Apply friction to slow down turning
-        turning_velocity *= TURN_FRICTION ** delta_time
+        if kill==1:
+            robot_velocity[0] = 0
+            robot_velocity[1] = 0 
+            turning_velocity =  0
 
-    if kill==1:
-        robot_velocity[0] = 0
-        robot_velocity[1] = 0 
-        turning_velocity =  0
+        # Limit the maximum turning speed of the robot
+        if abs(turning_velocity) > MAX_TURN_SPEED_RADPS and kill==0:
+            turning_velocity = math.copysign(MAX_TURN_SPEED_RADPS, turning_velocity)
 
-    # Limit the maximum turning speed of the robot
-    if abs(turning_velocity) > MAX_TURN_SPEED_RADPS and kill==0:
-        turning_velocity = math.copysign(MAX_TURN_SPEED_RADPS, turning_velocity)
+        # Limit the maximum speed of the robot
+        speed = math.sqrt(robot_velocity[0] ** 2 + robot_velocity[1] ** 2)
+        if speed > MAX_SPEED_MPS * PIXELS_PER_METER and kill == 0:
+            scale_factor = MAX_SPEED_MPS * PIXELS_PER_METER / speed
+            robot_velocity[0] *= scale_factor
+            robot_velocity[1] *= scale_factor
 
-    # Limit the maximum speed of the robot
-    speed = math.sqrt(robot_velocity[0] ** 2 + robot_velocity[1] ** 2)
-    if speed > MAX_SPEED_MPS * PIXELS_PER_METER and kill == 0:
-        scale_factor = MAX_SPEED_MPS * PIXELS_PER_METER / speed
-        robot_velocity[0] *= scale_factor
-        robot_velocity[1] *= scale_factor
+        # Update the direction of the robot based on turning velocity
+        robot_direction += turning_velocity * delta_time
 
-    # Update the direction of the robot based on turning velocity
-    robot_direction += turning_velocity * delta_time
+        # Update the position of the robot based on its velocity
+        player_position[0] += robot_velocity[0] * delta_time
+        player_position[1] += robot_velocity[1] * delta_time
 
-    # Update the position of the robot based on its velocity
-    player_position[0] += robot_velocity[0] * delta_time
-    player_position[1] += robot_velocity[1] * delta_time
+        # Check if the 'K' key is pressed
+        if keys[pygame.K_k]:
+            kill = 1
+        
+        # Draw FPS
+        fps_text = font.render(f"FPS: {int(clock.get_fps())}", True, pygame.Color('white'))
+        screen.blit(fps_text, (width - 150, height - 50))
 
-    # Check if the 'K' key is pressed
-    if keys[pygame.K_k]:
-        kill = 1
-    
-    # Draw FPS
-    fps_text = font.render(f"FPS: {int(clock.get_fps())}", True, pygame.Color('white'))
-    screen.blit(fps_text, (width - 150, height - 50))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    pygame.display.update()
+        pygame.display.update()
 
 pygame.quit()
 sys.exit()
