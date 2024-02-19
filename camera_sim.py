@@ -7,7 +7,7 @@ def uncertainty_add(distance, angle, sigma):
     covanriance=np.diag(sigma**2)
     distance, angle=np.random.multivariate_normal(mean, covanriance)
     distance=max(distance, 0)
-    angle=max(angle, 0)
+    #angle=max(angle, 0)
     return [distance , angle]
 
 class CameraScan:
@@ -28,7 +28,7 @@ class CameraScan:
     def sense_obstacles(self, balls):
         data = []
         x1, y1 = self.position[0], self.position[1]
-        for angle in np.linspace(self.robot_direction, (self.robot_direction + 2*math.pi), 100, endpoint=False):
+        for angle in np.linspace(self.robot_direction, (self.robot_direction + 2*math.pi), 70, endpoint=False):
             # Adjust negative angles to fall within [0, 2π)
             if angle < 0:
                 angle += 2 * math.pi
@@ -36,25 +36,29 @@ class CameraScan:
             x2, y2 = (x1 + self.Range * math.cos(angle), y1 + self.Range * math.sin(angle))
               # Draw scan line
             
-            start_angle = 95
-            end_angle =  225
+            start_angle = 360 - self.fov/2
+            end_angle =  self.fov/2
             for ball in balls:
                 ball_position = ball[1]
                 ball_color = ball[0]
                 ball_radius = 6.5  # Adjust according to your ball size
-                if not (math.degrees(angle-self.robot_direction)>=start_angle and math.degrees(angle-self.robot_direction)<=end_angle):
+                if (math.degrees(angle-self.robot_direction)>=start_angle or math.degrees(angle-self.robot_direction)<=end_angle):
                      pygame.draw.line(self.screen, (0, 0, 255), self.position, (int(x2), int(y2)), 2)
                 
-                if self.circle_line_collision(x1, y1, x2, y2, ball_position[0], ball_position[1], ball_radius) and not (math.degrees(angle-self.robot_direction)>=start_angle and math.degrees(angle-self.robot_direction)<=end_angle):
+                if self.circle_line_collision(x1, y1, x2, y2, ball_position[0], ball_position[1], ball_radius) and (math.degrees(angle-self.robot_direction)>=start_angle or math.degrees(angle-self.robot_direction)<=end_angle):
                     # Collision detected between the ray and the ball
                    
-                    distance = self.distance(ball_position)
-                    output = uncertainty_add(distance, math.degrees(angle - self.robot_direction), self.sigma)
+                    distance = self.distance(ball_position)/100
+                    if (math.degrees(angle-self.robot_direction))>=start_angle:
+                        angle2 = math.degrees(angle - self.robot_direction) - 360
+                    else:
+                        angle2 = math.degrees(angle - self.robot_direction) 
+                    output = uncertainty_add(distance, angle2, self.sigma)
                     output.append(self.position)
                     output.append(ball_color)  # Add ball color to the output
                     data.append(output)
                     for d in data:
-                        print(d[1])
+                        print(d[3])
                     break  # Break out of the loop to ensure each ray detects only one ball
 
         if len(data) > 0:
