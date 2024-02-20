@@ -25,7 +25,7 @@ laser.setlidaropt(ydlidar.LidarPropSingleChannel, False)
 ret = laser.initialize()
 
 # Initialize Arduino serial connection
-ser = serial.Serial('/dev/ttyACM0', 9600)  # Replace '/dev/ttyACM0' with the correct port
+#ser = serial.Serial('/dev/ttyACM0', 9600)  # Replace '/dev/ttyACM0' with the correct port
 
 # Function to convert radians to degrees
 def radians_to_degrees(radians):
@@ -59,18 +59,18 @@ if ret:
                     r = laser.doProcessSimple(scan)
                     if r:
                         for point in scan.points:
-                            data = ser.readline()
-                            try:
-                                decoded_data = data.decode('utf-8').strip()
-                                values = decoded_data.split(',')
+                            #data = ser.readline()
+                            #try:
+                             #   decoded_data = data.decode('utf-8').strip()
+                             #   values = decoded_data.split(',')
 
-                                if len(values) == 5:
+                             #   if len(values) == 5:
                                     # Convert values to appropriate types
-                                    value1 = int(values[0])
-                                    value2 = int(values[1])
-                                    value3 = float(values[2])
-                                    value4 = values[3]
-                                    value5 = bool(int(values[4]))
+                              #      value1 = int(values[0])
+                              #      value2 = int(values[1])
+                               #     value3 = float(values[2])
+                               #     value4 = values[3]
+                                #    value5 = bool(int(values[4]))
                                     
                                     # Print values
                                     #print("Value 1:", value1)
@@ -82,16 +82,19 @@ if ret:
                                 # Convert angle to degrees
                                 angle_degrees = radians_to_degrees(point.angle)
                                 # Append angle and range to lidar data list
-                                print(angle_degrees)
-                                csv_writer.writerow([value1, value2, value3, value4, value5, angle_degrees, point.range] )
-                            except UnicodeDecodeError:
-                                pass
+                                if round(angle_degrees)==0:
+                                     
+                                    print(point.range, angle_degrees)
+                                #csv_writer.writerow([value1, value2, value3, value4, value5, angle_degrees, point.range] )
+                            #except UnicodeDecodeError:
+                                #pass
 
                     else:
                         print("Failed to get Lidar Data")
 
 
-                    time.sleep(0.05)
+
+                    #time.sleep(0.05)
 
     laser.turnOff()
     laser.disconnecting()
