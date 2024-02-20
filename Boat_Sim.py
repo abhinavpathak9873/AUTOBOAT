@@ -7,26 +7,22 @@ import camera_sim as camera
 import csv
 import os
 from datetime import datetime
-import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-import joblib
+#import pandas as pd
+#from sklearn.ensemble import RandomForestRegressor
+#import joblib
 import serial
 import time
 
-ser = serial.Serial('/dev/cu.usbmodem11101', 9600)  # Replace 'COMX' with your Arduino's serial port
+#ser = serial.Serial('/dev/cu.usbmodem11101', 9600)  # Replace 'COMX' with your Arduino's serial port
+ser = serial.Serial('/dev/ttyACM0', 9600)  # Replace 'COMX' with your Arduino's serial port
+
 time.sleep(1)
 # Function to send values to Arduino
-def send_values_to_arduino(val1, val2, val3, val4, val5):
-    # Format the values as a single string separated by commas
-    data = f"{val1},{val2},{val3},{val4},{val5}\r"
-    # Send the data to Arduino
-    ser.write(data.encode())
-    # Add a small delay to allow Arduino to process the data
-    #time.sleep(0.1)
+def send_values_to_arduino(values):
+    data = ','.join(map(str, values)) + '\n'
+    ser.write(data.encode())  # Send the data
 
-
-
-pos_model = joblib.load('pos_estimation.pkl')
+#pos_model = joblib.load('pos_estimation.pkl')
 ang = []
 #ang.append("control")
 #ng.append("turn")
@@ -73,7 +69,10 @@ STEERING_SENSITIVITY = 0.002  # Sensitivity of steering
 ACCELERATION_TURN_MPS2 = 0.05  # Acceleration rate for turning in meters per second squared
 MAX_SPEED_MPS = 1.0  # Maximum speed limit for the robot in meters per second
 MAX_TURN_SPEED_RADPS = math.radians(180)  # Maximum turning speed in radians per second\
-MOTOR_SPEED = 70
+MOTOR_SPEED = 80
+
+# Speed = 0.66 m/s
+#Turn = 91 degrees/s
 
 # Convert constants from meters per second to pixels per frame
 PIXELS_PER_METER = 100  # Assuming 1 pixel represents 1 cm
@@ -87,7 +86,7 @@ robot_direction = random.randint(0,360)  # Initially facing right
 robot_velocity = [0, 0]  # [x_velocity, y_velocity]
 # Initialize turning angle velocity
 turning_velocity = 0
-
+kill2= -310
 # Set up display
 pygame.init()
 width, height = 1216, 816
@@ -200,13 +199,17 @@ with open(file_path, 'w', newline='') as csvfile:
         turn_speed = math.degrees(turning_velocity)
         SPEED_CONTROL = round((linear_speed/MAX_SPEED_MPS)*MOTOR_SPEED,1)
         TURN_CONTROL = round((turn_speed/math.degrees(MAX_TURN_SPEED_RADPS))*MOTOR_SPEED,1)
-        if SPEED_CONTROL <=5:
-            SPEED_CONTROL =5
-        if abs(TURN_CONTROL) <=5:
-            TURN_CONTROL =5
-        garbage = 10
-        throw = -1
-        send_values_to_arduino(SPEED_CONTROL, TURN_CONTROL, kill, throw, garbage)
+
+        lval = SPEED_CONTROL + TURN_CONTROL
+        rval = SPEED_CONTROL - TURN_CONTROL
+       
+
+        if lval <=5:
+            lval =5
+        if abs(rval) <=5:
+            rval =5
+        zoom = -1
+        send_values_to_arduino([lval, rval, kill2, zoom])
         
         
         r=[]
@@ -297,6 +300,7 @@ with open(file_path, 'w', newline='') as csvfile:
         # Check if the 'K' key is pressed
         if keys[pygame.K_k]:
             kill = 1
+            kill2 = 310
         
         # Draw FPS
         fps_text = font.render(f"FPS: {int(clock.get_fps())}", True, pygame.Color('white'))
